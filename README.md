@@ -3,5 +3,5 @@
 ---
 **저장중인 모델 코드**
 
-- [**SeQNRoN**](https://github.com/INSECT5386/Code/blob/main/SeQNRoN.py)
+- [**SeQRoN**](https://github.com/INSECT5386/Code/blob/main/SeQRoN.py)
 - [**KoT4-190K**](https://github.com/INSECT5386/Code/blob/main/KoT4-190K.py)
