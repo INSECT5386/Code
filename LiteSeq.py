@@ -239,7 +239,7 @@ class Seq2Seq:
         loss = self.decoder.forward(enc_outputs, y_seq)    
         return loss    
     
-   def update_params(self):      
+    def update_params(self):      
         dh_decoder = self.decoder.backward()      
         self.encoder.backward(dh_decoder)      
         
