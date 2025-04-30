@@ -1,6 +1,7 @@
 import numpy as np  
 import pandas as pd  
 import json  
+import re  # 정규표현식 모듈
 from tqdm import tqdm  
 import joblib  
 from LiteSeq import SimpleEncoder, SimpleDecoder, Adam, Seq2Seq
@@ -10,6 +11,8 @@ optimizer = Adam
 # 전처리 함수
 def preprocess(text):
     if isinstance(text, str):  # text가 문자열일 경우에만 strip 호출
+        # 특수문자 제거 (영어와 숫자, 한글만 남기기)
+        text = re.sub(r'[^a-zA-Z0-9가-힣\s]', '', text)
         return f"<start> {text.strip()} <end>"
     else:
         return ""  # 문자열이 아닌 경우 빈 문자열 반환
@@ -28,30 +31,30 @@ answers = [preprocess(str(a)) for a in df["answer"]]  # str()로 변환하여 �
 # 결과 확인
 print(questions[:5])
 print(answers[:5])
-  
+
 vocab = sorted(list(set(" ".join(questions + answers).split())))  
 vocab_size = len(vocab)  
 word2idx = {w: i for i, w in enumerate(vocab)}  
 idx2word = {i: w for i, w in enumerate(vocab)}  
-  
+
 def encode_sequence(seq, word2idx):  
     return [word2idx[word] for word in seq.split() if word in word2idx]  
-  
+
 def pad_sequences(seqs, pad_value=0):  
     max_len = max(len(seq) for seq in seqs)  
     return np.array([seq + [pad_value] * (max_len - len(seq)) for seq in seqs])  
-  
+
 X = [encode_sequence(q, word2idx) for q in questions[:1000]]  
 Y = [encode_sequence(a, word2idx) for a in answers[:1000]]  
 X_padded = pad_sequences(X)  
 Y_padded = pad_sequences(Y)  
-  
+
 tokenizer = {"word2idx": word2idx, "idx2word": {str(k): v for k, v in idx2word.items()}}  
 with open("tokenizer.json", "w", encoding="utf-8") as f:  
     json.dump(tokenizer, f, ensure_ascii=False, indent=4)  
-  
-print("토크나이저 저장 완료!")  
- 
+
+print("토크나이저 저장 완료!")
+
 
 embed_size, hidden_size = 64, 64
 encoder = GRUEncoder(vocab_size, embed_size, hidden_size)  
