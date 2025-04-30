@@ -3,7 +3,7 @@ import pandas as pd
 import json  
 from tqdm import tqdm  
 import joblib  
-from LiteSeq import GRUEncoder, GRUDecoder, Adam, Seq2Seq
+from LiteSeq import SimpleEncoder, SimpleDecoder, Adam, Seq2Seq
 
 optimizer = Adam
 
@@ -15,7 +15,7 @@ def preprocess(text):
         return ""  # 문자열이 아닌 경우 빈 문자열 반환
 
 # 데이터셋 로드 (이미 변환된 CSV 파일 사용)
-df = pd.read_csv("data.csv")
+df = pd.read_csv("https://huggingface.co/datasets/Yuchan5386/MINDAI/resolve/main/data.csv?download=true")
 
 # NaN 값이나 float 값을 처리하기 위한 방법
 df['question'] = df['question'].fillna('')  # NaN 값을 빈 문자열로 처리
