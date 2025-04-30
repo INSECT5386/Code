@@ -213,12 +213,16 @@ class Seq2Seq:
     def update_params(self):  
         dh_decoder = self.decoder.backward()  
         self.encoder.backward(dh_decoder)  
+    
+    # 어텐션 가중치 기울기도 포함시켜야 한다.
         self.optimizer.grads = [  
             self.encoder.dW_xh, self.encoder.dW_hh,  
             self.decoder.dW_xh, self.decoder.dW_hh,  
-            self.decoder.dW_hy, self.decoder.dW_ah  
+            self.decoder.dW_hy, self.decoder.dW_ah,  
+            self.decoder.dW_q, self.decoder.dW_k, self.decoder.dW_v  # 어텐션 가중치 기울기 추가
         ]  
-        self.optimizer.update()  
+    
+        self.optimizer.update()
   
     def predict(self, x_seq, word2idx, idx2word):  
         enc_outputs = self.encoder.forward(x_seq)  
