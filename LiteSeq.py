@@ -189,41 +189,66 @@ class SimpleDecoder:
   
             dh_next = np.dot(dtanh, self.W_hh.T)  
   
-        return dh_next
-
-class Seq2Seq:  
-    def __init__(self, encoder, decoder, learning_rate=0.001):  
-        self.encoder = encoder  
-        self.decoder = decoder  
-        self.lr = learning_rate  
-        self.optimizer = Adam(  
-            params=[  
-                encoder.W_xh, encoder.W_hh,  
-                decoder.W_xh, decoder.W_hh, decoder.W_hy, decoder.W_ah  
-            ],  
-            grads=[None] * 6,  
-            lr=self.lr  
-        )  
+        return dh_next  
   
-    def train_step(self, x_seq, y_seq):  
-        enc_outputs = self.encoder.forward(x_seq)  
-        loss = self.decoder.forward(enc_outputs, y_seq)  
-        return loss  
+    def decode(self, encoder_outputs, word2idx, idx2word, max_len=25, temperature=1.0, top_k=5):  
+        h = encoder_outputs[-1]  
+        idx = word2idx["<start>"]  
+        output = []  
   
-    def update_params(self):  
-        dh_decoder = self.decoder.backward()  
-        self.encoder.backward(dh_decoder)  
+        for _ in range(max_len):  
+            input_emb = self.embedding[idx]  
+            context, _ = self.attention(h, encoder_outputs)  
+            combined_input = input_emb + np.dot(context, self.W_ah)  
+            h = np.tanh(np.dot(combined_input, self.W_xh) + np.dot(h, self.W_hh) + self.b_h)  
+            y_pred = np.dot(h, self.W_hy) + self.b_y  
+            y_pred /= temperature  
+  
+            if top_k > 0:  
+                top_k_idx = np.argsort(y_pred)[-top_k:]  
+                top_k_probs = np.exp(y_pred[top_k_idx])  
+                top_k_probs /= np.sum(top_k_probs)  
+                idx = np.random.choice(top_k_idx, p=top_k_probs)  
+            else:  
+                probs = self.softmax(y_pred)  
+                idx = np.random.choice(len(probs), p=probs)  
+  
+            word = idx2word.get(idx, "<unk>")  
+            if word == "<end>":  
+                break  
+            output.append(word)  
+  
+        return " ".join(output)  
+  
+class Seq2Seq:    
+    def __init__(self, encoder, decoder, learning_rate=0.001):    
+        self.encoder = encoder    
+        self.decoder = decoder    
+        self.lr = learning_rate    
+        self.optimizer = Adam(    
+            params=[    
+                encoder.W_xh, encoder.W_hh,    
+                decoder.W_xh, decoder.W_hh, decoder.W_hy, decoder.W_ah    
+            ],    
+            grads=[None] * 6,    
+            lr=self.lr    
+        )    
     
-    # 어텐션 가중치 기울기도 포함시켜야 한다.
-        self.optimizer.grads = [  
-            self.encoder.dW_xh, self.encoder.dW_hh,  
-            self.decoder.dW_xh, self.decoder.dW_hh,  
-            self.decoder.dW_hy, self.decoder.dW_ah,  
-            self.decoder.dW_q, self.decoder.dW_k, self.decoder.dW_v  # 어텐션 가중치 기울기 추가
-        ]  
+    def train_step(self, x_seq, y_seq):    
+        enc_outputs = self.encoder.forward(x_seq)    
+        loss = self.decoder.forward(enc_outputs, y_seq)    
+        return loss    
     
-        self.optimizer.update()
-  
-    def predict(self, x_seq, word2idx, idx2word):  
-        enc_outputs = self.encoder.forward(x_seq)  
+    def update_params(self):    
+        dh_decoder = self.decoder.backward()    
+        self.encoder.backward(dh_decoder)    
+        self.optimizer.grads = [    
+            self.encoder.dW_xh, self.encoder.dW_hh,    
+            self.decoder.dW_xh, self.decoder.dW_hh,    
+            self.decoder.dW_hy, self.decoder.dW_ah    
+        ]    
+        self.optimizer.update()    
+    
+    def predict(self, x_seq, word2idx, idx2word):    
+        enc_outputs = self.encoder.forward(x_seq)    
         return self.decoder.decode(enc_outputs, word2idx, idx2word)
