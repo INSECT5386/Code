@@ -114,7 +114,7 @@ def generate_text_topp(model, prompt, max_gen=98, p=0.9, temperature=0.8, min_le
 max_len = 100
 model = GPT(vocab_size=vocab_size, seq_len=max_len, d_model=100, d_ff=400, n_layers=4)
 model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=2e-4))  # 필요 없어도 safety용
-model.load_weights("VecterA.weights.h5")
+model.load_weights("VecterA.weights (1).h5")
 
 # ===== 5. 생성 테스트 =====
 prompt = "요즘 인기 많은 음식은 뭐야?"
